@@ -13,11 +13,15 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'lasanha_2026_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///lasanha_v3.db')
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+db_url = os.environ.get("DATABASE_URL", "sqlite:///lasanha_v3.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Apenas uma instância de SQLAlchemy - adicione logs para verificar
 try:
     db = SQLAlchemy(app)
     logger.info("SQLAlchemy instance created successfully.")
@@ -386,7 +390,3 @@ def logout():
 
 with app.app_context():
     db.create_all()
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
