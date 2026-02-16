@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Expresso Delivery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root { 
+            --brand: #D2691E; /* Laranja suave */
+            --bg: #F5F5F5; /* Branco meio pastel */
+            --white: #FFFFFF; /* Branco puro */
+        }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; color: #333; }
+        
+        .card-custom { border: none; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: 0.3s; background: var(--white); }
+        .stat-card { padding: 1.5rem; text-align: center; border-bottom: 5px solid transparent; }
+        .stat-value { font-size: 1.4rem; font-weight: 800; display: block; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #666; letter-spacing: 1px; }
+        
+        .fab { 
+            position: fixed; bottom: 25px; right: 25px; 
+            width: 65px; height: 65px; border-radius: 50%;
+            background: var(--brand); color: var(--white); border: none;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 25px rgba(210, 105, 30, 0.4); z-index: 1000;
+        }
+
+        .ingrediente-item { padding: 1rem; border-bottom: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; }
+        .ingrediente-item:last-child { border-bottom: none; }
+
+        @media (max-width: 768px) {
+            .stat-value { font-size: 1.1rem; }
+            .navbar-brand { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4 py-3">
+    <div class="container">
+        <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+            <i data-lucide="chef-hat"></i> EXPRESSO DELIVERY
+        </span>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm bg-dark text-white border-secondary" onchange="location.href='/?periodo={{ periodo }}&combo='+this.value">
+                <option value="7" {{ 'selected' if periodo == '7' }}>7 Dias</option>
+                <option value="30" {{ 'selected' if periodo == '30' }}>30 Dias</option>
+                <option value="completo" {{ 'selected' if periodo == 'completo' }}>Período Completo</option>
+                {% for mes_num, mes_nome in [(1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'), (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'), (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')] %}
+                    <option value="mes-{{ mes_num }}" {{ 'selected' if periodo == 'mes-' + mes_num|string }}> {{ mes_nome }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-select form-select-sm bg-dark text-white border-secondary" onchange="location.href='/?periodo={{ periodo }}&combo='+this.value">
+                {% for combo in combos %}
+                <option value="{{ combo.id }}" {{ 'selected' if combo_ativo and combo.id == combo_ativo.id }}> {{ combo.nome }}</option>
+                {% endfor %}
+            </select>
+            <a href="/receitas" class="btn btn-outline-light btn-sm">Receitas</a>
+            <a href="/combos" class="btn btn-outline-light btn-sm">Combos</a>
+            <a href="/gastos" class="btn btn-outline-light btn-sm">Gastos</a>
+            <a href="/config" class="btn btn-outline-light btn-sm">Config</a>
+            <a href="/logout" class="btn btn-outline-light btn-sm"><i data-lucide="log-out" size="16"></i></a>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card card-custom stat-card border-primary">
+                <span class="stat-label">Entrada Bruta</span>
+                <span class="stat-value text-primary">R$ {{ "%.2f"|format(bruto) }}</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-custom stat-card border-danger">
+                <span class="stat-label">Gasto Total</span>
+                <span class="stat-value text-danger">R$ {{ "%.2f"|format(gastos) }}</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-custom stat-card border-success">
+                <span class="stat-label">Lucro Real</span>
+                <span class="stat-value text-success">R$ {{ "%.2f"|format(lucro) }}</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-custom stat-card bg-primary text-white" onclick="bootstrap.Modal.getOrCreateInstance('#modalPreco').show()" style="cursor: pointer;">
+                <span class="stat-label text-white-50">Preço Marmita</span>
+                <span class="stat-value">R$ {{ "%.2f"|format(preco_venda) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card card-custom p-4 h-100">
+                <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                    <i data-lucide="pie-chart" size="20"></i> Divisão de Custos dos Ingredientes ({{ combo_ativo.nome if combo_ativo else 'Nenhum' }})
+                </h6>
+                <div style="max-height: 300px;">
+                    <canvas id="chartPizza"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card card-custom p-4 mb-4 bg-dark text-white">
+                <h6 class="fw-bold mb-3">Registrar Venda</h6>
+                <form action="/vender" method="POST" class="d-flex gap-2">
+                    <input type="number" name="quantidade" class="form-control form-control-lg" value="1" min="1">
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">VENDER</button>
+                </form>
+            </div>
+
+            <div class="card card-custom">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold m-0 text-uppercase small text-muted">Ingredientes do Combo ({{ combo_ativo.nome if combo_ativo else 'Nenhum' }})</h6>
+                    <span class="badge bg-danger-subtle text-danger p-2">Custo Un: R$ {{ "%.2f"|format(custo_un) }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if combo_ativo %}
+                        {% for combo_rec in combo_ativo.receitas %}
+                            {% for item in combo_rec.receita.itens %}
+                            <div class="ingrediente-item">
+                                <div>
+                                    <span class="fw-bold d-block">{{ combo_rec.receita.nome }}: {{ item.ingrediente.nome }}</span>
+                                    <small class="text-muted">Usa {{ item.qtd_usada_por_fornada }}{{ item.unidade_uso }} por fornada</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div>
+                                        <span class="fw-bold text-danger">R$ {{ "%.2f"|format(custo_unitario_ingrediente(item.ingrediente_id) * item.qtd_usada_por_fornada) }} / fornada</span><br>
+                                        <small class="text-muted">R$ {{ "%.2f"|format(custo_unitario_ingrediente(item.ingrediente_id) * item.qtd_usada_por_fornada / conf.marmitas_por_fornada) }} / marmita</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted p-3">Nenhum combo ativo encontrado. <a href="/combos">Crie um combo em Combos</a>.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="card card-custom p-4">
+                <h6 class="fw-bold mb-4">Lucro e Gastos ao Longo do Tempo</h6>
+                <canvas id="chartLinha"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPreco" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <form action="/config/preco" method="POST" class="p-4 text-center">
+                <h6 class="fw-bold">Alterar Preço de Venda</h6>
+                <div class="input-group my-3">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" step="0.50" name="preco" class="form-control form-control-lg text-center" value="{{ preco_venda }}">
+                </div>
+                <button type="submit" class="btn btn-dark w-100">Atualizar</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    lucide.createIcons();
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('chartPizza').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: JSON.parse('{{ labels_itens | safe }}'),
+                datasets: [{
+                    data: JSON.parse('{{ gastos_itens | safe }}'),
+                    backgroundColor: ['#e63946', '#a8dadc', '#457b9d', '#1d3557', '#f1faee', '#ffb703'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        const ctxLinha = document.getElementById('chartLinha').getContext('2d');
+        new Chart(ctxLinha, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ graph_labels | safe }}'),
+                datasets: [{
+                    label: 'Lucro (R$)',
+                    data: JSON.parse('{{ graph_lucro | safe }}'),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    fill: true
+                }, {
+                    label: 'Gastos (R$)',
+                    data: JSON.parse('{{ graph_custo | safe }}'),
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    fill: true
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    });
+</script>
+</body>
+</html>

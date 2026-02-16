@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurações - Expresso Delivery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { 
+            --brand: #D2691E; 
+            --bg: #F5F5F5; 
+            --white: #FFFFFF; 
+        }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; color: #333; }
+        .card { background: var(--white); border-radius: 20px; }
+        .btn-success { background: var(--brand); border: none; }
+        .btn-success:hover { background: #B8571F; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5" style="max-width: 600px;">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4>Configurações do Sistema</h4>
+            </div>
+            <div class="card-body">
+                <form action="/config/salvar" method="POST">
+                    <h5>Geral</h5>
+                    <div class="mb-3">
+                        <label>Preço da Marmita (R$)</label>
+                        <input type="number" step="0.50" name="preco_marmita" class="form-control" value="{{ conf.preco_marmita }}" required>
+                    </div>
+                    <hr>
+                    <h5>Gás (Botijão)</h5>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label>Preço do Botijão (R$)</label>
+                            <input type="number" step="0.01" name="preco_botijao" class="form-control" value="{{ conf.preco_botijao }}" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label>Duração (Horas)</label>
+                            <input type="number" step="0.1" name="horas_duracao_botijao" class="form-control" value="{{ conf.horas_duracao_botijao }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label>Tempo Médio de Cozimento (Minutos)</label>
+                            <input type="number" step="0.1" name="tempo_forno_minutos" class="form-control" value="{{ conf.tempo_forno_minutos }}" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label>Marmitas por Fornada</label>
+                            <input type="number" name="marmitas_por_fornada" class="form-control" value="{{ conf.marmitas_por_fornada }}" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <h5>Entrega (Gasolina)</h5>
+                    <div class="row">
+                        <div class="col-4 mb-3">
+                            <label>Preço da Gasolina (R$/L)</label>
+                            <input type="number" step="0.01" name="preco_gasolina" class="form-control" value="{{ conf.preco_gasolina }}" required>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <label>Km por Litro</label>
+                            <input type="number" step="0.1" name="km_por_litro" class="form-control" value="{{ conf.km_por_litro }}" required>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <label>Km Médio por Entrega</label>
+                            <input type="number" step="0.1" name="km_media_entrega" class="form-control" value="{{ conf.km_media_entrega }}" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Salvar Configurações</button>
+                    <a href="/" class="btn btn-link w-100 mt-2">Voltar ao Dashboard</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

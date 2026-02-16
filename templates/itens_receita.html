@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Itens da Receita - Expresso Delivery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --brand: #D2691E; --bg: #F5F5F5; --white: #FFFFFF; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; color: #333; }
+        .card { background: var(--white); border-radius: 20px; }
+        .btn-primary { background: var(--brand); border: none; }
+        .btn-primary:hover { background: #B8571F; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <a href="/receitas" class="btn btn-outline-secondary mb-3"><i data-lucide="arrow-left"></i> Voltar às Receitas</a>
+        <h2>Itens da Receita: {{ receita.nome }}</h2>
+        <button class="btn btn-primary" onclick="abrirNovoItem()">Adicionar Item</button>
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>Ingrediente</th>
+                    <th>Quantidade por Fornada</th>
+                    <th>Unidade</th>
+                    <th>Custo por Fornada</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in receita.itens %}
+                <tr>
+                    <td>{{ item.ingrediente.nome }}</td>
+                    <td>{{ item.qtd_usada_por_fornada }}</td>
+                    <td>{{ item.unidade_uso }}</td>
+                    <td>R$ {{ "%.2f"|format(custo_unitario_ingrediente(item.ingrediente_id) * item.qtd_usada_por_fornada) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="modal fade" id="modalItem">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/receita/item/salvar" method="POST">
+                    <input type="hidden" name="receita_id" value="{{ receita.id }}">
+                    <div class="modal-body">
+                        <label>Ingrediente</label>
+                        <select name="ingrediente_id" class="form-select" required>
+                            {% for ing in ingredientes %}
+                            <option value="{{ ing.id }}">{{ ing.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <label>Quantidade por Fornada</label>
+                        <input type="number" step="0.1" name="qtd_uso" class="form-control" required>
+                        <label>Unidade</label>
+                        <select name="uni_uso" class="form-select">
+                            <option value="g">g</option>
+                            <option value="Kg">Kg</option>
+                            <option value="L">L</option>
+                            <option value="ml">ml</option>
+                            <option value="Un">Un</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirNovoItem() { new bootstrap.Modal(document.getElementById('modalItem')).show(); }
+    </script>
+</body>
+</html>
